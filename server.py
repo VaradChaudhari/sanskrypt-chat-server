@@ -30,19 +30,18 @@ def receive_message():
     try:
         data = request.get_json()
         username = data["username"]
-        message = data["message"]  # Encrypted
+        message = data["message"]
         key_package = data["key_package"]
 
-        # Save message (as encrypted) and key package
         with open("session/message.json", "w", encoding="utf-8") as f:
             json.dump({"message": message}, f, ensure_ascii=False, indent=2)
         with open("session/key_package.json", "w", encoding="utf-8") as f:
             json.dump(key_package, f, ensure_ascii=False, indent=2)
 
-        entry = f"{username} - {message}"
-        save_to_history(entry)
+        log_entry = f"{username} - {message}"
+        save_to_history(log_entry)
 
-        return jsonify({"status": "success", "decrypted": "[SERVER STORED ENCRYPTED]"})
+        return jsonify({"status": "success", "decrypted": log_entry})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -50,7 +49,7 @@ def receive_message():
 def get_history():
     if not os.path.exists(HISTORY_FILE):
         return jsonify({"messages": []})
-
+    
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
