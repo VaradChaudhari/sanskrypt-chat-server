@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify
-from decryptor import decrypt_message
-from encryptor import encrypt_message
 import os
 import json
 
@@ -42,11 +40,11 @@ def receive_message():
         with open("session/key_package.json", "w", encoding="utf-8") as f:
             json.dump(key_package, f, ensure_ascii=False, indent=2)
 
-        # Decrypt message (or simulate it)
-        decrypted = f"{username} - {message}"
-        save_to_history(decrypted)
+        # Combine username with encrypted message
+        entry = f"{username} - {message}"
+        save_to_history(entry)
 
-        return jsonify({"status": "success", "decrypted": decrypted})
+        return jsonify({"status": "success", "decrypted": entry})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -58,13 +56,8 @@ def get_history():
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    # Send last 10 messages as JSON list
-    history = []
-    for line in lines[-10:]:
-        if " - " in line:
-            user, msg = line.strip().split(" - ", 1)
-            history.append({"username": user, "message": msg})
-    return jsonify({"messages": history})
+    # Return last 10 full lines (username + encrypted message)
+    return jsonify({"messages": [line.strip() for line in lines[-10:]]})
 
 def save_to_history(entry):
     with open(HISTORY_FILE, "a", encoding="utf-8") as f:
