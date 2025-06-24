@@ -1,6 +1,4 @@
 from flask import Flask, request, jsonify
-from decryptor import decrypt_message
-from encryptor import encrypt_message
 import os
 import json
 
@@ -23,7 +21,6 @@ def login_user():
         key_package = data["key_package"]
 
         print(f"[LOGIN] {username} connected with key_package: {key_package}")
-
         return jsonify({"status": "success", "message": "Authenticated."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -33,20 +30,19 @@ def receive_message():
     try:
         data = request.get_json()
         username = data["username"]
-        message = data["message"]
+        message = data["message"]  # Encrypted
         key_package = data["key_package"]
 
-        # Save encrypted message and key
+        # Save message (as encrypted) and key package
         with open("session/message.json", "w", encoding="utf-8") as f:
             json.dump({"message": message}, f, ensure_ascii=False, indent=2)
         with open("session/key_package.json", "w", encoding="utf-8") as f:
             json.dump(key_package, f, ensure_ascii=False, indent=2)
 
-        # Decrypt message (or simulate it)
-        decrypted = f"{username} - {message}"
-        save_to_history(decrypted)
+        entry = f"{username} - {message}"
+        save_to_history(entry)
 
-        return jsonify({"status": "success", "decrypted": decrypted})
+        return jsonify({"status": "success", "decrypted": "[SERVER STORED ENCRYPTED]"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -54,11 +50,10 @@ def receive_message():
 def get_history():
     if not os.path.exists(HISTORY_FILE):
         return jsonify({"messages": []})
-    
+
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    # Send last 10 messages as JSON list
     history = []
     for line in lines[-10:]:
         if " - " in line:
@@ -72,4 +67,3 @@ def save_to_history(entry):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
- 
